@@ -1,0 +1,7 @@
+{
+  "name": "salah_sarl",
+  "private": true,
+  "scripts": {
+    "start": "echo 'Use railway.json for deployment'"
+  }
+}
