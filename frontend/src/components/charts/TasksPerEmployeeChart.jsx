@@ -2,9 +2,9 @@ import { ResponsiveContainer, Bar, BarChart, Tooltip, XAxis, YAxis } from 'recha
 
 export const TasksPerEmployeeChart = ({ data = [] }) => {
   const formatted = data
-    .filter((item) => item._id)
+    .filter((item) => item.name)
     .map((item) => ({
-      name: item._id?.name || 'Unassigned',
+      name: item.name || 'Unassigned',
       count: item.count
     }));
 

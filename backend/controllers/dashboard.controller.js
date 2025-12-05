@@ -1,5 +1,6 @@
 import Task from '../models/Task.model.js';
 import User from '../models/User.model.js';
+import Location from '../models/Location.model.js';
 
 export const getStats = async (req, res) => {
   try {
@@ -20,6 +21,11 @@ export const getStats = async (req, res) => {
       dueDate: { $lt: now },
       status: { $ne: 'completed' },
     });
+
+    // Get user statistics
+    const totalUsers = await User.countDocuments();
+    const totalEmployees = await User.countDocuments({ role: 'employee' });
+    const totalAdmins = await User.countDocuments({ role: 'admin' });
 
     // Get tasks per employee
     const tasksPerEmployee = await Task.aggregate([
@@ -70,6 +76,20 @@ export const getStats = async (req, res) => {
       .populate('assignee', 'name email')
       .sort({ dueDate: 1 })
       .limit(10);
+      
+    // Get recent locations (last 24 hours)
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    
+    const recentLocations = await Location.find({
+      createdAt: { $gte: twentyFourHoursAgo }
+    })
+      .populate('employeeId', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(10);
+      
+    // Get total locations count
+    const totalLocations = await Location.countDocuments();
 
     res.json({
       totals: {
@@ -78,6 +98,15 @@ export const getStats = async (req, res) => {
         inProgress,
         open,
         overdue,
+      },
+      users: {
+        total: totalUsers,
+        employees: totalEmployees,
+        admins: totalAdmins,
+      },
+      locations: {
+        total: totalLocations,
+        recent: recentLocations,
       },
       tasksPerEmployee,
       upcomingDeadlines,

@@ -6,7 +6,7 @@ import User from './models/User.model.js';
 dotenv.config();
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const mongoUri = process.env.MONGO_URI ;
 const mongoDbName = process.env.MONGO_DB_NAME || 'salahelec';
 const mongoConnectionString = mongoUri.includes('mongodb+srv') || mongoUri.includes('?')
   ? mongoUri

@@ -50,11 +50,48 @@ app.use((req, res) => {
 });
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const mongoDbName = process.env.MONGO_DB_NAME || 'salahelec';
-const mongoConnectionString = mongoUri.includes('mongodb+srv') || mongoUri.includes('?')
-  ? mongoUri
-  : `${mongoUri}/${mongoDbName}`;
+const mongoUri = process.env.MONGO_URI;
+const mongoDbName = process.env.MONGO_DB_NAME || 'db1';
+
+// Build connection string
+let mongoConnectionString;
+if (!mongoUri) {
+  // Default to local MongoDB
+  mongoConnectionString = `mongodb://localhost:27017/${mongoDbName}`;
+} else if (mongoUri.includes('mongodb+srv')) {
+  // MongoDB Atlas connection
+  const urlParts = mongoUri.split('?');
+  const baseUri = urlParts[0];
+  const queryString = urlParts[1] ? `?${urlParts[1]}` : '';
+  
+  // Check if database name is already in the base URI
+  const pathParts = baseUri.split('/');
+  if (pathParts.length > 3 && pathParts[3] && pathParts[3].trim() !== '') {
+    // Database name already exists, use as is
+    mongoConnectionString = mongoUri;
+  } else {
+    // Add database name before query string
+    mongoConnectionString = `${baseUri}/${mongoDbName}${queryString}`;
+  }
+} else {
+  // Local MongoDB connection
+  if (mongoUri.includes('/') && mongoUri.split('/').length > 3) {
+    // Database name might already be in URI
+    const lastPart = mongoUri.split('/').pop();
+    if (lastPart && !lastPart.includes('?')) {
+      // Has database name, use as is
+      mongoConnectionString = mongoUri;
+    } else {
+      // No database name, add it
+      mongoConnectionString = mongoUri.includes('?')
+        ? mongoUri.replace('?', `/${mongoDbName}?`)
+        : `${mongoUri}/${mongoDbName}`;
+    }
+  } else {
+    // No path, add database name
+    mongoConnectionString = `${mongoUri}/${mongoDbName}`;
+  }
+}
 
 // Start the server first
 app.listen(PORT, () => {
@@ -63,11 +100,12 @@ app.listen(PORT, () => {
   // Then connect to MongoDB
   mongoose
     .connect(mongoConnectionString, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      serverSelectionTimeoutMS: 10000, // Timeout after 10s
       connectTimeoutMS: 10000, // Give up initial connection after 10s
+      dbName: mongoDbName, // Explicitly set database name
     })
     .then(() => {
-      console.log('✅ Connected to MongoDB');
+      console.log(`✅ Connected to MongoDB (Database: ${mongoDbName})`);
     })
     .catch((err) => {
       console.error('❌ MongoDB connection error:', err);

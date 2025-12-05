@@ -4,11 +4,7 @@ import bcrypt from 'bcryptjs';
 
 export const getUsers = async (req, res) => {
   try {
-    // Only admins can list all users
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
-    }
-
+    // All authenticated users can view the user list
     const users = await User.find().select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {

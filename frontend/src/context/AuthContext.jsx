@@ -17,7 +17,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (token && !user) {
       AuthAPI.profile()
-        .then((res) => setUser(res.data))
+        .then((response) => {
+          // Store the user data in localStorage
+          const userData = response.data;
+          localStorage.setItem(USER_KEY, JSON.stringify({ 
+            _id: userData._id, 
+            name: userData.name, 
+            email: userData.email, 
+            role: userData.role 
+          }));
+          setUser(userData);
+        })
         .catch(() => handleLogout());
     }
   }, [token]);
@@ -25,9 +35,9 @@ export const AuthProvider = ({ children }) => {
   const handleLogin = async (credentials) => {
     setLoading(true);
     try {
-      const { data } = await AuthAPI.login(credentials);
-      persistAuth(data);
-      return data;
+      const response = await AuthAPI.login(credentials);
+      persistAuth(response.data);
+      return response.data;
     } finally {
       setLoading(false);
     }
@@ -36,9 +46,9 @@ export const AuthProvider = ({ children }) => {
   const handleRegister = async (payload) => {
     setLoading(true);
     try {
-      const { data } = await AuthAPI.register(payload);
-      persistAuth(data);
-      return data;
+      const response = await AuthAPI.register(payload);
+      persistAuth(response.data);
+      return response.data;
     } finally {
       setLoading(false);
     }
@@ -46,11 +56,15 @@ export const AuthProvider = ({ children }) => {
 
   const persistAuth = (data) => {
     localStorage.setItem(TOKEN_KEY, data.token);
+    
+    // Check if user data is directly in the response or nested
+    const userData = data.user || data;
+    
     localStorage.setItem(
       USER_KEY,
-      JSON.stringify({ _id: data._id, name: data.name, email: data.email, role: data.role })
+      JSON.stringify({ _id: userData._id, name: userData.name, email: userData.email, role: userData.role })
     );
-    setUser({ _id: data._id, name: data.name, email: data.email, role: data.role });
+    setUser({ _id: userData._id, name: userData.name, email: userData.email, role: userData.role });
     setToken(data.token);
   };
 
