@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "proxy": "https://salahsarl-production-59f3.up.railway.app",
   "scripts": {
     "dev": "vite",
     "build": "npx vite build",
